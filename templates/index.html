@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-900">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fake Job Detector - Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: white;
+      overflow-x: hidden;
+    }
+
+    /* Enable proper scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      opacity: 0.35;
+      filter: blur(100px);
+      animation: float 25s infinite alternate ease-in-out, morph 40s infinite alternate ease-in-out;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .blob1 { width: 500px; height: 500px; background: linear-gradient(45deg, #a78bfa, #7c3aed); top: -150px; left: -150px; animation-delay: 0s; }
+    .blob2 { width: 400px; height: 400px; background: linear-gradient(45deg, #60a5fa, #2563eb); top: 200px; left: 60%; animation-delay: 3s; }
+    .blob3 { width: 550px; height: 550px; background: linear-gradient(45deg, #14b8a6, #0d9488); top: 60%; left: 40%; animation-delay: 6s; }
+
+    @keyframes float {
+      0% { transform: translate3d(0,0,0) scale(1); }
+      50% { transform: translate3d(50px,-30px,0) scale(1.1); }
+      100% { transform: translate3d(-30px,60px,0) scale(0.95); }
+    }
+
+    @keyframes morph {
+      0% { border-radius: 40% 60% 60% 40% / 55% 40% 60% 45%; }
+      50% { border-radius: 55% 45% 50% 50% / 45% 60% 40% 55%; }
+      100% { border-radius: 40% 60% 60% 40% / 55% 40% 60% 45%; }
+    }
+
+    .fade-slide-up {
+      transform: translateY(40px);
+      opacity: 0;
+      transition: all 0.85s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+    .fade-slide-up.show {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .glass {
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 2rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    button {
+      transition: all 0.3s ease-in-out;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #4f46e5;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #6366f1;
+    }
+
+    textarea::-webkit-scrollbar { width: 8px; }
+    textarea::-webkit-scrollbar-thumb { background-color: #818cf8; border-radius: 4px; }
+    textarea::-webkit-scrollbar-track { background-color: transparent; }
+
+    .counter {
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      color: #f0f0f0;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      user-select: none;
+    }
+
+    .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+
+    .loading-spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid transparent;
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Navigation bar scroll effect */
+    .nav-scrolled {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    /* Ensure proper content flow */
+    .main-content {
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body class="h-full">
+
+  <!-- Floating background blobs -->
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+
+  <!-- Navigation -->
+  <nav id="mainNav" class="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-slate-900/60 border-b border-white/10 shadow-lg transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-3 cursor-default select-none">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-3xl drop-shadow-lg">🕵️</div>
+        <span class="text-2xl font-extrabold tracking-wide text-white">Fake Job Detector</span>
+      </div>
+      <div class="flex gap-3 items-center">
+        <a href="/" class="px-5 py-2 text-base font-semibold rounded-lg bg-white/10 text-white hover:bg-white/20 active:scale-95 transition">Home</a>
+        <a href="/history" class="px-5 py-2 text-base font-semibold rounded-lg text-gray-300 hover:text-white hover:bg-white/10 active:scale-95 transition">History</a>
+        <a href="/admin_login" class="px-5 py-2 text-base font-semibold rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white active:scale-95 transition">Admin Login</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero + Form Container -->
+  <main class="pt-28 pb-20 flex flex-col lg:flex-row items-center justify-center gap-16 max-w-7xl mx-auto px-6 relative z-10">
+    
+    <!-- Hero Text -->
+    <section class="max-w-xl space-y-8 text-white">
+      <h1 class="text-5xl lg:text-6xl font-extrabold leading-tight">
+        Detect Fake Jobs <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Instantly</span>
+      </h1>
+      <p class="text-lg text-gray-300 max-w-lg">
+        Analyze job postings in real-time to protect yourself from fraudulent listings. Stay safe, stay informed.
+      </p>
+      <button id="showFormBtn" class="px-8 py-4 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500/70 active:scale-95 text-white font-bold transition shadow-lg drop-shadow-lg">
+        Analyze Now
+      </button>
+
+      <!-- How it works section -->
+      <div class="mt-12 bg-slate-800/60 backdrop-blur-xl p-6 rounded-3xl shadow-lg max-w-md">
+        <h2 class="text-3xl font-semibold mb-4 text-white">How It Works</h2>
+        <ol class="list-decimal list-inside space-y-3 text-gray-300 text-lg leading-relaxed">
+          <li>Paste the job posting text into our analyzer.</li>
+          <li>Our AI examines keywords and patterns to detect fraud.</li>
+          <li>Receive an instant and reliable authenticity verdict.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Enlarged Form -->
+    <section id="jobForm" class="w-full lg:w-[35rem] rounded-3xl border border-white/20 shadow-xl backdrop-blur-2xl bg-slate-900/90 p-8 fade-slide-up max-w-xl">
+      <h2 class="text-3xl font-bold mb-5 text-white">Analyze Job Posting</h2>
+      
+      <form action="/predict" method="POST" class="space-y-4">
+        {% if error %}
+        <div class="bg-red-500/20 border border-red-500/50 text-red-200 px-3 py-2 rounded-xl">
+          {{ error }}
+        </div>
+        {% endif %}
+
+        <textarea 
+          name="job_description" 
+          rows="8"
+          required
+          placeholder="Paste the full job posting here..."
+          class="w-full resize-none rounded-xl border border-white/20 bg-black/50 px-4 py-4 text-white placeholder-gray-400 text-base shadow-inner focus:outline-none focus:ring-4 focus:ring-indigo-500/70 transition"
+        ></textarea>
+
+        <button type="submit" 
+          class="w-full rounded-xl px-8 py-4 text-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:scale-[1.05] active:scale-[0.95] transition font-bold shadow-lg flex items-center justify-center gap-2">
+          <span id="submitText">Analyze</span>
+          <svg id="loadingSpinner" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+      </form>
+    </section>
+  </main>
+
+
+  <!-- Footer -->
+  <footer class="mt-20 bg-slate-900/80 backdrop-blur-xl border-t border-white/10 py-12">
+    <div class="max-w-7xl mx-auto px-6 text-center">
+      <div class="flex justify-center items-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-2xl">🕵️</div>
+        <span class="text-xl font-bold text-white">Fake Job Detector</span>
+      </div>
+      <p class="text-gray-400 max-w-2xl mx-auto">
+        Protecting job seekers from fraudulent listings using advanced AI technology. 
+        Stay safe in your job search journey.
+      </p>
+      <div class="mt-8 flex justify-center gap-6">
+        <a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
+        <a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a>
+        <a href="#" class="text-gray-400 hover:text-white transition">Contact</a>
+      </div>
+      <p class="mt-8 text-gray-500 text-sm">
+        &copy; 2024 Fake Job Detector. All rights reserved.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Navigation scroll effect
+    const mainNav = document.getElementById('mainNav');
+    
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        mainNav.classList.add('nav-scrolled');
+      } else {
+        mainNav.classList.remove('nav-scrolled');
+      }
+    });
+
+    // Show/hide form animation
+    const showFormBtn = document.getElementById('showFormBtn');
+    const jobForm = document.getElementById('jobForm');
+    
+    showFormBtn.addEventListener('click', () => {
+      jobForm.classList.add('show');
+      // Scroll to form with offset for navigation
+      const formPosition = jobForm.getBoundingClientRect().top + window.pageYOffset - 100;
+      window.scrollTo({
+        top: formPosition,
+        behavior: 'smooth'
+      });
+    });
+
+    // Counter animation for stats
+    const counters = document.querySelectorAll('.counter');
+    let countersAnimated = false;
+
+    const animateCounters = () => {
+      if (countersAnimated) return;
+      
+      counters.forEach(counter => {
+        const target = +counter.getAttribute('data-target');
+        let count = 0;
+        const increment = target / 100;
+        
+        const updateCount = () => {
+          if (count < target) {
+            count = Math.min(target, count + increment);
+            counter.innerText = Math.floor(count);
+            requestAnimationFrame(updateCount);
+          } else {
+            counter.innerText = target;
+          }
+        };
+        updateCount();
+      });
+      
+      countersAnimated = true;
+    };
+
+    // Intersection Observer for counters
+    const statsSection = document.querySelector('section');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animateCounters();
+        }
+      });
+    }, { threshold: 0.3 });
+
+    if (statsSection) {
+      observer.observe(statsSection);
+    }
+
+    // Make floating blobs follow mouse subtly for depth effect
+    const blobs = document.querySelectorAll('.blob');
+    let mouseX = 0;
+    let mouseY = 0;
+
+    document.addEventListener('mousemove', e => {
+      mouseX = e.clientX / window.innerWidth;
+      mouseY = e.clientY / window.innerHeight;
+    });
+
+    // Smooth blob movement
+    function updateBlobs() {
+      blobs.forEach((blob, i) => {
+        const offset = (i + 1) * 10;
+        const x = mouseX * offset - offset / 2;
+        const y = mouseY * offset - offset / 2;
+        
+        blob.style.transform = `translate(${x}px, ${y}px)`;
+      });
+      requestAnimationFrame(updateBlobs);
+    }
+    updateBlobs();
+
+    // Form submission handling
+    const predictionForm = document.querySelector('form');
+    const submitText = document.getElementById('submitText');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+
+    if (predictionForm) {
+      predictionForm.addEventListener('submit', function(e) {
+        const textarea = this.querySelector('textarea');
+        
+        // Basic validation
+        if (!textarea.value.trim()) {
+          e.preventDefault();
+          textarea.focus();
+          textarea.classList.add('ring-2', 'ring-red-500');
+          return;
+        }
+
+        // Show loading state
+        submitText.textContent = 'Analyzing...';
+        loadingSpinner.classList.remove('hidden');
+        
+        // Disable form while submitting
+        this.querySelector('button[type="submit"]').disabled = true;
+      });
+    }
+
+    // Initialize form visibility
+    window.addEventListener('load', () => {
+      // Form will be hidden by default, show when button clicked
+      jobForm.classList.remove('show');
+    });
+  </script>
+
+</body>
+</html>

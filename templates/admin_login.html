@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Stylish Hybrid Login</title>
+
+<!-- Tailwind CDN (keeps layout utilities short) -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  :root{
+    --glass: rgba(255,255,255,0.08);
+    --glass-strong: rgba(255,255,255,0.12);
+    --accent1: #ff5fa2;   /* pink */
+    --accent2: #7c3aed;   /* purple */
+    --accent3: #14b8a6;   /* teal */
+  }
+
+  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+
+  /* Page background (blend of both images + gradient) */
+  .page-bg{
+    position:fixed; inset:0; z-index:-2;
+    background: linear-gradient(180deg, rgba(10,6,30,0.85), rgba(19,6,40,0.85));
+    overflow:hidden;
+  }
+
+  /* Soft art panel: left uses user's onboard image with color overlay & grain */
+  .art-left{
+    position:absolute;
+    left:6%;
+    top:10%;
+    bottom:10%;
+    width:44%;
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow: 0 30px 80px rgba(8,6,20,0.7);
+    transform: translateZ(0);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+  }
+
+  .art-left::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      linear-gradient(180deg, rgba(124,58,237,0.25), rgba(255,95,162,0.18)),
+      url('/mnt/data/9197b5e5-fa90-4cfa-bbde-e97e9b79ddb5.png') center/cover no-repeat;
+    mix-blend-mode:screen;
+    filter: saturate(1.05) contrast(1.02);
+    transform-origin:center;
+    transition: transform 0.8s cubic-bezier(.2,.9,.3,1);
+  }
+
+  .art-left::after{
+    /* subtle grain */
+    content:"";
+    position:absolute; inset:0;
+    background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 6px 6px;
+    pointer-events:none;
+    mix-blend-mode: overlay;
+    opacity:0.35;
+  }
+
+  .art-left .badge{
+    position:relative;
+    z-index:2;
+    color:white;
+    text-align:left;
+    width:78%;
+  }
+
+  .logo{
+    width:72px;height:72px;border-radius:14px;
+    background: linear-gradient(135deg,var(--accent1),var(--accent2));
+    display:inline-flex;align-items:center;justify-content:center;
+    box-shadow: 0 10px 30px rgba(124,58,237,0.25);
+    font-weight:800;color:white;font-size:18px;
+  }
+
+  .art-title{
+    font-weight:800;color:white;font-size:34px;margin-top:18px;margin-bottom:6px;
+    letter-spacing:-0.5px;
+    text-shadow: 0 4px 18px rgba(0,0,0,0.5);
+  }
+  .art-sub{ color: rgba(255,255,255,0.9); opacity:0.9; margin-bottom:18px; font-size:15px; }
+
+  /* small foreground artwork from the other image (rounded card at bottom) */
+  .art-card {
+    position:relative; z-index:2; width:78%; margin-top: 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    padding:18px;border-radius:16px;backdrop-filter: blur(6px);
+    display:flex;align-items:center;justify-content:space-between;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.35);
+  }
+  .art-card img{ height:56px; width:auto; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.45); }
+
+  /* Floating blobs (foreground) */
+  .blob{
+    position:absolute;border-radius:9999px; filter: blur(80px); opacity:0.55; z-index:-1;
+    animation: floaty 12s ease-in-out infinite alternate;
+  }
+  .b1{ width:420px;height:420px; left:-120px; top:-60px; background: linear-gradient(135deg,var(--accent1),var(--accent2)); }
+  .b2{ width:360px;height:360px; right:-100px; bottom:-80px; background: linear-gradient(135deg,#ff8a65,#ef476f); animation-duration:16s; opacity:0.45; }
+  @keyframes floaty{ from{transform:translateY(0) rotate(0deg);} to{transform:translateY(-38px) rotate(8deg);} }
+
+  /* Login card (center-right) */
+  .login-card{
+    position:relative;
+    width:420px;
+    max-width:92%;
+    min-height:420px;
+    border-radius:22px;
+    padding:28px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.06);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 35px 80px rgba(3,6,18,0.65);
+    display:flex;flex-direction:column; justify-content:space-between;
+  }
+
+  .brandline{
+    display:flex;align-items:center;gap:12px;
+  }
+  .brandline .mark{
+    width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,var(--accent1),var(--accent2));
+    display:inline-grid;place-items:center;color:white;font-weight:800; font-size:18px;
+    box-shadow: 0 10px 30px rgba(124,58,237,0.16);
+  }
+  h1.login-title{ font-size:20px; margin:8px 0 2px; color:white; font-weight:800; letter-spacing:-0.2px; }
+  p.login-desc{ color:rgba(255,255,255,0.8); font-size:13px; margin:0 0 12px; }
+
+  input[type="text"], input[type="password"]{
+    width:100%; padding:12px 14px; border-radius:12px; border:none;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    color:white; font-size:14px; outline:none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  input::placeholder{ color: rgba(255,255,255,0.5); }
+
+  .control-row{ display:flex; gap:10px; align-items:center; margin-top:12px; }
+  .btn-primary{
+    flex:1; padding:12px 14px; border-radius:999px; border:none; cursor:pointer;
+    background: linear-gradient(90deg,var(--accent1),var(--accent2));
+    font-weight:700; color:white; box-shadow: 0 12px 30px rgba(124,58,237,0.2);
+    transition: transform .14s ease, box-shadow .14s ease;
+  }
+  .btn-primary:hover{ transform: translateY(-3px) scale(1.02); box-shadow: 0 20px 40px rgba(124,58,237,0.26); }
+
+  .ghost {
+    padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.06); color:rgba(255,255,255,0.9);
+    background:transparent; cursor:pointer; font-weight:600;
+  }
+
+  .socials{ display:flex; gap:10px; margin-top:14px; }
+  .social{
+    flex:1; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,0.06);
+    display:flex;align-items:center;gap:10px; justify-content:center; font-weight:700; cursor:pointer;
+    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  }
+
+  .muted{ color:rgba(255,255,255,0.55); font-size:13px; text-align:center; margin-top:12px; }
+
+  /* small screen tweaks */
+  @media (max-width:1024px){
+    .art-left{ left:4%; width:46%; top:7%; bottom:7%; border-radius:20px; }
+    .blob.b1{ left:-70px; top:-40px; }
+  }
+  @media (max-width:860px){
+    .art-left{ display:none; }
+    .login-card{ width:92%; }
+    .b2{ right:-40px; bottom:-40px; }
+  }
+
+  /* subtle focus ring */
+  input:focus{ box-shadow: 0 6px 30px rgba(239, 242, 244, 0.12); border: 1px solid rgba(124,58,237,0.18); }
+
+  /* little onboarding indicator dots */
+  .dots{ display:flex; gap:8px; margin-top:12px; }
+  .dot{ width:8px;height:8px;border-radius:99px;background:rgba(255,255,255,0.22); }
+  .dot.active{ background: linear-gradient(90deg,var(--accent1),var(--accent2)); box-shadow:0 6px 18px rgba(124,58,237,0.18); transform:scale(1.2); }
+</style>
+</head>
+<body>
+
+<div class="page-bg">
+  <!-- decorative foreground blobs -->
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+</div>
+
+<!-- LEFT art panel (blended onboard image) -->
+<div class="art-left">
+  <div class="badge">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="logo">FJD</div>
+      <div style="color:rgba(255,255,255,0.95);font-weight:700;font-size:16px">Fake Job Detector</div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div class="art-title">Welcome to the Dashboard</div>
+      <div class="art-sub">Fast. Accurate. Beautiful — manage, verify & moderate job listings with clarity.</div>
+
+      <div class="art-card" role="note" aria-hidden="true">
+        <!-- use the other uploaded image as a small windowed artwork -->
+        <img src="data:image/jpeg;base64,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" alt="card-art" />
+        <div style="flex:1;padding-left:12px;color:rgba(255,255,255,0.95);">
+          <div style="font-weight:800;">Get started</div>
+          <div style="font-size:13px; opacity:0.85;">Quick setup & onboarding for your moderation team.</div>
+        </div>
+      </div>
+
+      <div class="dots" style="margin-top:14px;">
+        <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CENTER-RIGHT login -->
+<div class="min-h-screen flex items-center justify-center" style="position:relative; z-index:5;">
+  <div class="login-card">
+    <div>
+      <div class="brandline">
+        <div class="mark">FJ</div>
+        <div>
+          <div style="color:rgba(255,255,255,0.9); font-weight:800;">Admin Portal</div>
+          <div style="color:rgba(255,255,255,0.55); font-size:12px;">Secure access — authorized personnel only</div>
+        </div>
+      </div>
+
+      <h1 class="login-title">Sign in </h1>
+     
+
+      <form method="POST" style="margin-top:8px;">
+        <label style="font-size:12px;color:rgba(255,255,255,0.7);display:block;margin-bottom:6px;">Email or username</label>
+        <input name="username" type="text" placeholder="you@company.com" required />
+
+        <div style="margin-top:12px;">
+          <label style="font-size:12px;color:rgba(255,255,255,0.7);display:block;margin-bottom:6px;">Password</label>
+          <input name="password" type="password" placeholder="••••••••" required />
+        </div>
+
+        <div class="control-row" style="margin-top:16px;">
+          <button class="btn-primary" type="submit">Sign in</button>
+          <button class="ghost" type="button" onclick="document.querySelector('input[name=username]').value='';document.querySelector('input[name=password]').value='';">Clear</button>
+        </div>
+      </form>
+
+      <div class="muted">or sign in with</div>
+      
+
+      <div class="socials" aria-hidden="false">
+        <div class="social btn-primary" role="button" tabindex="0" onclick="alert('Social login placeholder')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="opacity:0.9"><path d="M22 12c0-.68-.06-1.36-.18-2H12v3.8h5.2c-.22 1.12-.87 2.06-1.86 2.7v2.2h3c1.76-1.62 2.84-4 2.84-6.7z" fill="white"/></svg>
+          Google
+        </div>
+         <div class="social btn-primary" onclick="showAlert('GitHub login will be implemented')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          GitHub
+        </div>
+      </div>
+    </div>
+
+     <div style="margin-top:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <a href="/" style="font-size:13px;color:rgba(255,255,255,0.6); text-decoration:none; display:flex; align-items:center; gap:6px; transition: color 0.3s ease;" 
+           onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H19v-2z"/>
+          </svg>
+          Back to Home
+        </a>
+        <a href="#" style="font-size:13px;color:var(--accent1);font-weight:600;text-decoration:none; transition: opacity 0.3s ease;" 
+           onclick="showAlert('Password reset feature will be implemented')" 
+           onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+          Forgot Password?
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  (function(){
+    const art = document.querySelector('.art-left::before');
+  })();
+
+  const artBox = document.querySelector('.art-left');
+  if(artBox){
+    document.addEventListener('mousemove', (e)=>{
+      const r = artBox.getBoundingClientRect();
+      const cx = (e.clientX - r.left) / r.width - 0.5;
+      const cy = (e.clientY - r.top) / r.height - 0.5;
+      
+      artBox.style.transform = `translate3d(${cx*8}px, ${cy*8}px, 0)`;
+      artBox.querySelectorAll('img').forEach(img=>{
+        img.style.transform = `translate3d(${cx*12}px, ${cy*8}px, 0)`;
+      });
+    });
+    artBox.addEventListener('mouseleave', ()=>{ artBox.style.transform = ''; artBox.querySelectorAll('img').forEach(i=>i.style.transform=''); });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Logs - Fake Job Detector</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg-dark: #0f172a;
+    --bg-panel: #1e293b;
+    --accent-purple: #8b5cf6;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+  }
+  
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    min-height: 100vh;
+  }
+  
+  .glass {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 1rem;
+  }
+  
+  .nav-scrolled {
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  
+  .accuracy-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  .accuracy-high { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+  .accuracy-medium { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+  .accuracy-low { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+</style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+  
+  <!-- Navigation -->
+  <nav id="mainNav" class="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-slate-900/60 border-b border-white/10 shadow-lg transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-3 cursor-default select-none">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-2xl drop-shadow-lg">🕵️</div>
+        <span class="text-xl font-extrabold tracking-wide text-white">Fake Job Detector</span>
+      </div>
+      <div class="flex gap-3 items-center">
+        <a href="/admin_dashboard" class="px-4 py-2 text-sm font-semibold rounded-lg text-gray-300 hover:text-white hover:bg-white/10 active:scale-95 transition">Dashboard</a>
+        <a href="/retrain_logs" class="px-4 py-2 text-sm font-semibold rounded-lg bg-white/10 text-white active:scale-95 transition">Training Logs</a>
+        <a href="/" class="px-4 py-2 text-sm font-semibold rounded-lg text-gray-300 hover:text-white hover:bg-white/10 active:scale-95 transition">Home</a>
+        <a href="/logout" class="px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white active:scale-95 transition">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="pt-24 px-4 md:px-6 max-w-7xl mx-auto pb-12">
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-white mb-2">Training Logs</h1>
+        <p class="text-gray-400">History of all model retraining events</p>
+      </div>
+      <a href="/admin_dashboard" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold transition">
+        ← Back to Dashboard
+      </a>
+    </div>
+    
+    <div class="glass p-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="p-4 bg-slate-800/50 rounded-xl">
+          <div class="text-gray-400 text-sm mb-1">Total Retraining Events</div>
+          <div class="text-3xl font-bold text-white">{{ logs|length }}</div>
+        </div>
+        <div class="p-4 bg-slate-800/50 rounded-xl">
+          <div class="text-gray-400 text-sm mb-1">Latest Accuracy</div>
+          <div class="text-3xl font-bold text-white">
+            {% if logs and logs[0][1] %}
+              {{ logs[0][1] }}%
+            {% else %}
+              85.0%
+            {% endif %}
+          </div>
+        </div>
+        <div class="p-4 bg-slate-800/50 rounded-xl">
+          <div class="text-gray-400 text-sm mb-1">First Training</div>
+          <div class="text-xl font-bold text-white">
+            {% if logs and logs[-1][4] %}
+              {{ logs[-1][4].split()[0] }}
+            {% else %}
+              N/A
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="glass p-6">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-white/10">
+              <th class="text-left py-3 px-4 text-gray-400 font-semibold">ID</th>
+              <th class="text-left py-3 px-4 text-gray-400 font-semibold">Accuracy</th>
+              <th class="text-left py-3 px-4 text-gray-400 font-semibold">Training Source</th>
+              <th class="text-left py-3 px-4 text-gray-400 font-semibold">Model Size</th>
+              <th class="text-left py-3 px-4 text-gray-400 font-semibold">Date & Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if logs %}
+              {% for log in logs %}
+              <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                <td class="py-3 px-4 text-gray-300 font-mono">#{{ log[0] }}</td>
+                <td class="py-3 px-4">
+                  <span class="accuracy-badge {% if log[1] >= 90 %}accuracy-high{% elif log[1] >= 80 %}accuracy-medium{% else %}accuracy-low{% endif %}">
+                    {{ log[1] }}%
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-gray-300">{{ log[2] }}</td>
+                <td class="py-3 px-4 text-gray-400 text-sm">{{ log[3] }}</td>
+                <td class="py-3 px-4 text-gray-400">{{ log[4] }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" class="py-8 text-center text-gray-500">
+                  <div class="flex flex-col items-center justify-center">
+                    <svg class="w-12 h-12 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <p>No training logs found.</p>
+                    <p class="text-sm mt-2">Retrain the model to see logs here.</p>
+                  </div>
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+      
+      {% if logs %}
+      <div class="mt-6 text-center text-gray-500 text-sm">
+        Showing {{ logs|length }} training events
+      </div>
+      {% endif %}
+    </div>
+  </main>
+  
+  <footer class="mt-12 bg-slate-900/80 backdrop-blur-xl border-t border-white/10 py-8">
+    <div class="max-w-7xl mx-auto px-6 text-center">
+      <div class="flex justify-center items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-xl">🕵️</div>
+        <span class="text-lg font-bold text-white">Fake Job Detector</span>
+      </div>
+      <p class="text-gray-400 max-w-2xl mx-auto text-sm">
+        Model training history and retraining logs for the fake job detection system.
+      </p>
+      <div class="mt-6 flex justify-center gap-6 text-sm">
+        <a href="/admin_dashboard" class="text-gray-400 hover:text-white transition">Dashboard</a>
+        <a href="/" class="text-gray-400 hover:text-white transition">Home</a>
+        <a href="/history" class="text-gray-400 hover:text-white transition">Prediction History</a>
+      </div>
+      <p class="mt-6 text-gray-500 text-xs">
+        &copy; 2024 Fake Job Detector. All rights reserved.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Navigation scroll effect
+    const mainNav = document.getElementById('mainNav');
+    
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        mainNav.classList.add('nav-scrolled');
+      } else {
+        mainNav.classList.remove('nav-scrolled');
+      }
+    });
+  </script>
+</body>
+</html>
