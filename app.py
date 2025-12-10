@@ -38,7 +38,7 @@ def create_or_load_model():
             vectorizer = joblib.load('tfidf_vectorizer.pkl')
             print("Model loaded successfully!")
         else:
-            print("⚠️ Model files not found. Creating a new model...")
+            print(" Model files not found. Creating a new model...")
             create_improved_model("default dataset")
     except Exception as e:
         print(f" Error loading model: {e}")
@@ -80,7 +80,7 @@ def create_improved_model(source="default dataset"):
                 y = df['fraudulent']
                 source_name = source
                 
-                print(f"✅ Using CSV dataset with {len(df)} samples ({fraud_count} fake, {real_count} real)")
+                print(f"Using CSV dataset with {len(df)} samples ({fraud_count} fake, {real_count} real)")
             except Exception as csv_error:
                 print(f" Error loading CSV: {csv_error}")
                 # Fallback to enhanced training data
